@@ -46,25 +46,25 @@ class macs:
             if macaddr in self.denymacs:
                 MacError('Ambiguous action for mac address: ' + macaddr)
             if macaddr in self.allowmacs:
-                tools.warning('Mac address %s already added in allowed macs' % macaddr)
+                tools.warning('Mac address %s is already added in allowed macs' % macaddr)
             self.allowmacs.append(macaddr)
 
         if act == 'deny':
             if macaddr in self.allowmacs:
                 MacError('Ambiguous action for mac address: ' + macaddr)
             if macaddr in self.denymacs:
-                tools.warning('Mac address %s already added in deny macs' % macaddr)
+                tools.warning('Mac address %s is already added in deny macs' % macaddr)
             self.denymacs.append(macaddr)
 
     def del_mac(self, act, macaddr):
         if act == 'allow':
             if not macaddr in self.allowmacs:
-                return tools.warning('Mac address %s not added' % macaddr)
+                return tools.warning('Mac address %s is not added' % macaddr)
             self.allowmacs.remove(macaddr)
 
         if act == 'deny':
             if not macaddr in self.denymacs:
-                return tools.warning('Mac address %s not added' % macaddr)
+                return tools.warning('Mac address %s is not added' % macaddr)
             self.denymacs.remove(macaddr)
 
     def _read(self, path):

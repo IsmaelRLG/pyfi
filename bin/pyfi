@@ -92,7 +92,7 @@ dnsmasq.add_argument("-sm", "--show-macs",
     action ='store_true')
 dnsmasq.add_argument("-ip", "--ip-range",
     metavar=('<ip>',),
-    help   ='Set ip range to use. Default value: %(default)s',
+    help   ='Set an IP range to use. Default value: %(default)s',
     default=pyfilib.environ.ip_range,
     type   =str)
 
@@ -151,7 +151,7 @@ def main():
         return
     elif args.show_macs:
         if len(macs.allowmacs + macs.denymacs) == 0:
-            print('You dont have mac address added yet')
+            print("You haven't added a mac address yet")
             return
         print('N#     MAC ADDRES         STATUS')
         print('-----  -----------------  ------')

@@ -124,7 +124,7 @@ def load_vars():
                     reipv4['octet_e'] = str(reipv4['octet_i'] + limit_users)
 
                 if not tools.check_ipv4((ipaddr + '{octet_i}-{octet_e}').format(**reipv4)):
-                    tools.critical("Invalid ip address: '%s'" % ipaddr)
+                    tools.critical("Invalid IP address: '%s'" % ipaddr)
             return (
                 (ipaddr + '{octet_i}').format(**reipv4),
                 (ipaddr + '{octet_e}').format(**reipv4))

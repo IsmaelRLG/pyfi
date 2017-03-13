@@ -140,7 +140,7 @@ def run():
             tools.error('No dest interfaces were found.')
             tools.critical('You need to plug in a device or install drivers.')
         environ.dest_interface = random.choice(itfs.keys())
-        logging.info('device selected to forwarding: ' + environ.dest_interface)
+        logging.info('device selected to forward: ' + environ.dest_interface)
 
     if environ.dest_interface and environ.dest_interface == environ.wlan_interface:
         tools.critical('WTF? dest == wlan!')
