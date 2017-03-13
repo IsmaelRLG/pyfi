@@ -27,7 +27,7 @@ cli.add_argument("-d", "--debug",
     help   ='enable debug messages',
     action ='store_true')
 cli.add_argument("-fD", "--full-debug",
-    help   ='enable debug messages',
+    help   ='show full debug messages',
     action ='store_true')
 
 
@@ -42,7 +42,7 @@ cfg.add_argument("-c", "--conf",
     help   ='Use the specified config',
     type   =argparse.FileType('a+'))
 cfg.add_argument("-e", "--edit",
-    help   ='edit the config',
+    help   ='Opens an editor to modify the specified config file',
     action ='store_true')
 
 
