@@ -1,0 +1,171 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#    pyfi: easy wireless access point fabricator
+#    Copyright (C) 2017  Ismael Lugo
+
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import pyfilib
+import pyfilib.environ
+import pyfilib.macaddr
+import pyfilib.pyfi
+import argparse, logging, os
+
+cli = argparse.ArgumentParser(version=pyfilib.__version__)
+cli.add_argument("-d", "--debug",
+    help   ='enable debug messages',
+    action ='store_true')
+cli.add_argument("-fD", "--full-debug",
+    help   ='enable debug messages',
+    action ='store_true')
+
+
+# Config
+cfg = cli.add_argument_group('Config options')
+cfg.add_argument("-m", "--makeconf",
+    help   ='Generate the config',
+    action ='store_true')
+cfg.add_argument("-c", "--conf",
+    metavar=('<config file>',),
+    default=pyfilib.environ.conf_path,
+    help   ='Use the specified config',
+    type   =argparse.FileType('a+'))
+cfg.add_argument("-e", "--edit",
+    help   ='edit the config',
+    action ='store_true')
+
+
+# WIFI AP
+wap = cli.add_argument_group('WI-FI options')
+wap.add_argument("-s", "--ssid",
+    metavar=('<ssid name>',),
+    default=pyfilib.environ.ssid,
+    help   ='Set SSID name',
+    type   =str)
+wap.add_argument("-p", "--password",
+    metavar=('<password>',),
+    help   ='Set WI-FI password',
+    type   =str)
+wap.add_argument("-a", "--auth-method",
+    choices=('free', 'wpa', 'wpa2', 'wep'),
+    default=pyfilib.environ.auth_method,
+    dest   ='method',
+    help   ='Set auth method. Default value: %(default)s',
+    type   =str)
+wap.add_argument("-w", "--wlan",
+    metavar=('<interface name>',),
+    default=pyfilib.environ.wlan_interface,
+    help   ='Set wlan interface to use. Default value: %(default)s',
+    type   =str)
+wap.add_argument("-f", "--forward",
+    metavar=('<interface name>',),
+    default='lo',
+    help   ='Interface name to forward the traffic. Default value: %(default)s',
+    type   =str)
+
+
+# dhcp settings
+dnsmasq = cli.add_argument_group('dnsmasq options')
+dnsmasq.add_argument("-am", "--add-mac",
+    metavar=('{allow,deny}', '<mac address>',),
+    help   ='Add allowed or deny mac address',
+    nargs  = 2,
+    type   =str)
+dnsmasq.add_argument("-dm", "--del-mac",
+    metavar=('{allow,deny}', '<mac address>',),
+    help   ='remove allowed or deny mac address',
+    nargs  = 2,
+    type   =str)
+dnsmasq.add_argument("-sm", "--show-macs",
+    help   ='Show a list with all mac address',
+    action ='store_true')
+dnsmasq.add_argument("-ip", "--ip-range",
+    metavar=('<ip>',),
+    help   ='Set ip range to use. Default value: %(default)s',
+    default=pyfilib.environ.ip_range,
+    type   =str)
+
+
+def main():
+    args = cli.parse_args()
+    if args.debug:
+        lvl = 20
+    elif args.full_debug:
+        lvl = 10
+    else:
+        lvl = 40
+
+    logging.basicConfig(level=lvl, format='%(levelname)s: %(message)s')
+    if args.makeconf:
+        cfg = []
+        cfg.append('[{pyfi.proj_name}]')
+        cfg.append('wlan_interface = auto')
+        cfg.append('#dest_interface = auto')
+        cfg.append('dnsmasq_conf = ')
+        cfg.append('hostapd_conf = ')
+        cfg.append('ssid = {pyfi.ssid}')
+        cfg.append('password = ')
+        cfg.append('auth_method = {pyfi.auth_method}')
+        cfg.append('limit_users = ')
+        cfg.append('#macaddr = {pyfi.macaddr}')
+        cfg.append('#ipaddr = {pyfi.ip_range}')
+        args.conf = file(pyfilib.environ.conf_path, 'w')
+        args.conf.write('\n'.join(cfg).format(pyfi=pyfilib.environ))
+        return args.conf.close()
+
+    if args.edit:
+        return os.system('editor ' + args.conf.name)
+
+    if args.ip_range:
+        pyfilib.environ.ip_range = args.ip_range
+    pyfilib.environ.load_vars()
+    if args.wlan:
+        pyfilib.environ.wlan_interface = args.wlan
+    if args.forward:
+        pyfilib.environ.dest_interface = args.forward
+    if args.ssid:
+        pyfilib.environ.ssid = args.ssid
+    if args.method:
+        pyfilib.environ.auth_method = args.method
+    if args.method != 'free' and args.password:
+        pyfilib.environ.password = args.password
+
+    macs = pyfilib.macaddr.macs(pyfilib.environ.macaddr)
+    if args.add_mac or args.del_mac:
+        if args.add_mac:
+            macs.add_mac(*args.add_mac)
+        else:
+            macs.del_mac(*args.del_mac)
+        macs.save()
+        return
+    elif args.show_macs:
+        if len(macs.allowmacs + macs.denymacs) == 0:
+            print('You dont have mac address added yet')
+            return
+        print('N#     MAC ADDRES         STATUS')
+        print('-----  -----------------  ------')
+        nmac = 0
+        for macaddr in macs.allowmacs:
+            nmac += 1
+            print('[%s]  %s  ALLOW' % (str(nmac).zfill(3), macaddr))
+        for macaddr in macs.denymacs:
+            nmac += 1
+            print('[%s]  %s  DENY' % (str(nmac).zfill(3), macaddr))
+        return
+
+    pyfilib.pyfi.run()
+
+
+if __name__ == '__main__':
+    main()
